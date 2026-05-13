@@ -1,145 +1,172 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../features/auth/controllers/auth_provider.dart';
-import '../../features/auth/controllers/user_profile_provider.dart'; // EKLENDİ
 
-// Menü öğelerimiz için basit bir sınıf
-class _MenuDestination {
-  final String path;
-  final IconData icon;
-  final IconData selectedIcon;
-  final String label;
-  final bool requireSuperAdmin;
-
-  _MenuDestination({
-    required this.path,
-    required this.icon,
-    required this.selectedIcon,
-    required this.label,
-    this.requireSuperAdmin = false, // Varsayılan olarak herkes görebilir
-  });
-}
-
-class MainLayout extends ConsumerWidget {
+class MainLayout extends StatelessWidget {
   final Widget child;
-
+  
   const MainLayout({super.key, required this.child});
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final supabase = ref.watch(supabaseProvider);
-    final userProfileAsync = ref.watch(userProfileProvider);
+  int _calculateSelectedIndex(BuildContext context) {
+    final String location = GoRouterState.of(context).uri.path;
+    if (location.startsWith('/tours')) return 1;
+    if (location.startsWith('/bookings')) return 2;
+    if (location.startsWith('/customers')) return 3;
+    if (location.startsWith('/finance')) return 4;
+    return 0; // Dashboard varsayılan
+  }
 
-    // Profil yüklenirken menüyü bekletebiliriz
-    if (userProfileAsync.isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+  void _onItemTapped(int index, BuildContext context) {
+    switch (index) {
+      case 0:
+        context.go('/');
+        break;
+      case 1:
+        context.go('/tours');
+        break;
+      case 2:
+        context.go('/bookings');
+        break;
+      case 3:
+        context.go('/customers');
+        break;
+      case 4:
+        context.go('/finance');
+        break;
     }
+  }
 
-    final role = userProfileAsync.value?['role'] ?? 'staff';
-    final isSuperAdmin = role == 'super_admin';
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final isDesktop = size.width > 900;
+    final currentIndex = _calculateSelectedIndex(context);
 
-    // Tüm menü ihtimalleri
-    final allDestinations = [
-      _MenuDestination(path: '/dashboard', icon: Icons.dashboard_outlined, selectedIcon: Icons.dashboard, label: 'Panel'),
-      // Şirketler menüsü SADECE Süper Admin için
-      _MenuDestination(path: '/companies', icon: Icons.domain, selectedIcon: Icons.business, label: 'Şirketler', requireSuperAdmin: true),
-      _MenuDestination(path: '/tours', icon: Icons.map_outlined, selectedIcon: Icons.map, label: 'Turlar'),
-      _MenuDestination(path: '/customers', icon: Icons.people_outline, selectedIcon: Icons.people, label: 'Müşteriler'),
-    ];
-
-    // Sadece kullanıcının yetkisi olan menüleri filtrele
-    final visibleDestinations = allDestinations.where((dest) {
-      if (dest.requireSuperAdmin && !isSuperAdmin) return false;
-      return true;
-    }).toList();
-
-    // Hangi sayfada olduğumuzu (index) hesapla
-    final currentPath = GoRouterState.of(context).matchedLocation;
-    int selectedIndex = visibleDestinations.indexWhere((dest) => currentPath.startsWith(dest.path));
-    if (selectedIndex == -1) selectedIndex = 0; // Bulamazsa varsayılan Panel
-
-   return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background, // Kremsi arkaplan
+    return Scaffold(
       body: Row(
         children: [
-          // SOL MENÜ (Gölge efekti eklendi)
-          Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface, // Menü tam beyaz
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
-                  blurRadius: 15,
-                  offset: const Offset(2, 0),
-                )
-              ],
-            ),
-            child: NavigationRail(
-              selectedIndex: selectedIndex,
-              onDestinationSelected: (int index) {
-                context.go(visibleDestinations[index].path);
-              },
-              labelType: NavigationRailLabelType.all,
-              backgroundColor: Colors.transparent, // Arkaplanı container'dan alıyor
-              indicatorColor: Theme.of(context).colorScheme.primary.withOpacity(0.15), // Seçili öğe arka planı daha soft
-              selectedIconTheme: IconThemeData(color: Theme.of(context).colorScheme.primary),
-              selectedLabelTextStyle: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w600),
-              unselectedLabelTextStyle: const TextStyle(color: Colors.grey),
-              unselectedIconTheme: const IconThemeData(color: Colors.grey),
-              leading: const Padding(
-                padding: EdgeInsets.only(bottom: 30, top: 20),
-                child: Icon(Icons.travel_explore, size: 44, color: Color(0xFF1CA9C9)), // Turova Logosu hep kendi renginde
-              ),
-              trailing: Expanded(
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 20.0),
-                    child: IconButton(
-                      icon: const Icon(Icons.logout, color: Colors.redAccent),
-                      tooltip: 'Çıkış Yap',
-                      onPressed: () async {
-                        await supabase.auth.signOut();
-                      },
+          // MASAÜSTÜ/TABLET İÇİN SOL MENÜ (SIDEBAR)
+          if (isDesktop)
+            Container(
+              width: 280,
+              color: Colors.white,
+              child: Column(
+                children: [
+                  // Logo ve Marka
+                  Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(Icons.explore, color: Theme.of(context).colorScheme.primary),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text('Turova', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -1)),
+                      ],
                     ),
                   ),
-                ),
-              ),
-              destinations: visibleDestinations.map((dest) {
-                return NavigationRailDestination(
-                  icon: Icon(dest.icon),
-                  selectedIcon: Icon(dest.selectedIcon),
-                  label: Text(dest.label),
-                );
-              }).toList(),
-            ),
-          ),
-          
-          // SAĞ TARAFTAKİ DEĞİŞEN İÇERİK (Animasyon Eklendi)
-          Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300), // Akıcı geçiş süresi
-              transitionBuilder: (Widget child, Animation<double> animation) {
-                return FadeTransition(
-                  opacity: animation,
-                  child: SlideTransition(
-                    position: Tween<Offset>(
-                      begin: const Offset(0.02, 0), // Hafif sağdan gelme efekti
-                      end: Offset.zero,
-                    ).animate(animation),
-                    child: child,
+                  
+                  // Menü Elemanları
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      children: [
+                        _SideMenuItem(icon: Icons.dashboard, title: 'Ana Panel', isSelected: currentIndex == 0, onTap: () => _onItemTapped(0, context)),
+                        _SideMenuItem(icon: Icons.map, title: 'Turlar', isSelected: currentIndex == 1, onTap: () => _onItemTapped(1, context)),
+                        _SideMenuItem(icon: Icons.event_available, title: 'Rezervasyonlar', isSelected: currentIndex == 2, onTap: () => _onItemTapped(2, context)),
+                        _SideMenuItem(icon: Icons.group, title: 'Müşteriler', isSelected: currentIndex == 3, onTap: () => _onItemTapped(3, context)),
+                        _SideMenuItem(icon: Icons.payments, title: 'Finans', isSelected: currentIndex == 4, onTap: () => _onItemTapped(4, context)),
+                      ],
+                    ),
                   ),
-                );
-              },
-              // Flutter'a child'ın değiştiğini anlatmak için unique key atıyoruz
-              child: Container(
-                key: ValueKey<String>(currentPath),
-                child: child,
+                  
+                  // Alt Kısım (Ayarlar, Çıkış)
+                  const Divider(height: 1),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      children: [
+                        _SideMenuItem(icon: Icons.settings, title: 'Ayarlar', isSelected: false, onTap: () {}),
+                        _SideMenuItem(
+                          icon: Icons.logout, 
+                          title: 'Çıkış Yap', 
+                          isSelected: false, 
+                          onTap: () {
+                            // Çıkış işlemi eklenecek
+                            context.go('/login');
+                          },
+                          color: Colors.red,
+                        ),
+                      ],
+                    ),
+                  )
+                ],
               ),
             ),
-          ),
+            
+          // SAĞ TARAF (VEYA MOBİLDE TAM EKRAN) İÇERİK: Aktif olan sayfa buraya gelir
+          Expanded(child: child),
         ],
+      ),
+      
+      // MOBİL İÇİN ALT MENÜ (BOTTOM NAVIGATION BAR)
+      bottomNavigationBar: isDesktop ? null : NavigationBar(
+        selectedIndex: currentIndex,
+        onDestinationSelected: (index) => _onItemTapped(index, context),
+        backgroundColor: Colors.white,
+        indicatorColor: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+        destinations: const [
+          NavigationDestination(icon: Icon(Icons.dashboard_outlined), selectedIcon: Icon(Icons.dashboard), label: 'Panel'),
+          NavigationDestination(icon: Icon(Icons.map_outlined), selectedIcon: Icon(Icons.map), label: 'Turlar'),
+          NavigationDestination(icon: Icon(Icons.event_available_outlined), selectedIcon: Icon(Icons.event_available), label: 'Kayıtlar'),
+          NavigationDestination(icon: Icon(Icons.group_outlined), selectedIcon: Icon(Icons.group), label: 'CRM'),
+          NavigationDestination(icon: Icon(Icons.payments_outlined), selectedIcon: Icon(Icons.payments), label: 'Finans'),
+        ],
+      ),
+    );
+  }
+}
+
+// Menü Elemanı Tasarımı
+class _SideMenuItem extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final Color? color;
+
+  const _SideMenuItem({required this.icon, required this.title, required this.isSelected, required this.onTap, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final activeColor = Theme.of(context).colorScheme.primary;
+    final itemColor = color ?? (isSelected ? activeColor : Colors.grey.shade700);
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        margin: const EdgeInsets.only(bottom: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? activeColor.withOpacity(0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: isSelected ? Border(right: BorderSide(color: activeColor, width: 4)) : null, // Seçili olana sağ çizgi
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: itemColor, size: 22),
+            const SizedBox(width: 16),
+            Text(
+              title,
+              style: TextStyle(color: itemColor, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500, fontSize: 15),
+            ),
+          ],
+        ),
       ),
     );
   }

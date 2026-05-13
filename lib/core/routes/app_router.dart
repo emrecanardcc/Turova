@@ -2,61 +2,68 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../features/auth/controllers/auth_provider.dart';
+// İskeletimizi core/widgets altından çekiyoruz (DÜZELTİLDİ)
+import '../widgets/main_layout.dart';
+
+// Diğer ekranlar
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/dashboard/screens/dashboard_screen.dart';
 import '../../features/tours/screens/tours_screen.dart';
 import '../../features/customers/screens/customers_screen.dart';
-import '../widgets/main_layout.dart';
-import '../../features/companies/screens/companies_screen.dart';
+import '../../features/bookings/screens/bookings_screen.dart';
+import '../../features/finance/screens/finance_screen.dart';
+import '../../features/auth/controllers/auth_controller.dart';
 
-// Navigator anahtarları
-final _rootNavigatorKey = GlobalKey<NavigatorState>();
-final _shellNavigatorKey = GlobalKey<NavigatorState>();
+// ... (Router kodunun geri kalanı tamamen aynı)
 
 final goRouterProvider = Provider<GoRouter>((ref) {
+  // Kullanıcının giriş yapıp yapmadığını dinliyoruz
   final authState = ref.watch(authStateProvider);
 
   return GoRouter(
-    navigatorKey: _rootNavigatorKey,
-    initialLocation: '/login',
+    initialLocation: '/',
+    // Kullanıcı giriş yapmamışsa onu Login'e at, yapmışsa gitmek istediği yere at
     redirect: (context, state) {
-      final isAuthenticated = authState.value?.session != null;
-      final isGoingToLogin = state.matchedLocation == '/login';
+      final isLoggedIn = authState.value != null;
+      final isLoggingIn = state.uri.path == '/login';
 
-      if (!isAuthenticated && !isGoingToLogin) return '/login';
-      if (isAuthenticated && isGoingToLogin) return '/dashboard';
-
-      return null;
+      if (!isLoggedIn && !isLoggingIn) return '/login';
+      if (isLoggedIn && isLoggingIn) return '/';
+      
+      return null; // Her şey yolunda
     },
     routes: [
+      // 1. GİRİŞ EKRANI (Menüsüz, tam ekran)
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
       ),
-      // SHELL ROUTE (Sabit Menülü Sayfalar)
+
+      // 2. ANA İSKELET (ShellRoute: Sol menü sabit kalır, içindeki ekranlar değişir)
       ShellRoute(
-        navigatorKey: _shellNavigatorKey,
         builder: (context, state, child) {
-          // Sol menümüzü çağırıyoruz, içindeki 'child' seçilen sayfa olacak
-          return MainLayout(child: child);
+          return MainLayout(child: child); // Az önce yazdığımız iskelet
         },
         routes: [
           GoRoute(
-            path: '/dashboard',
-            builder: (context, state) => const DashboardScreen(),
+            path: '/',
+            pageBuilder: (context, state) => const NoTransitionPage(child: DashboardScreen()),
           ),
           GoRoute(
             path: '/tours',
-            builder: (context, state) => const ToursScreen(),
+            pageBuilder: (context, state) => const NoTransitionPage(child: ToursScreen()),
+          ),
+          GoRoute(
+            path: '/bookings',
+            pageBuilder: (context, state) => const NoTransitionPage(child: BookingsScreen()),
           ),
           GoRoute(
             path: '/customers',
-            builder: (context, state) => const CustomersScreen(),
+            pageBuilder: (context, state) => const NoTransitionPage(child: CustomersScreen()),
           ),
           GoRoute(
-            path: '/companies',
-            builder: (context, state) => const CompaniesScreen(),
+            path: '/finance',
+            pageBuilder: (context, state) => const NoTransitionPage(child: FinanceScreen()),
           ),
         ],
       ),

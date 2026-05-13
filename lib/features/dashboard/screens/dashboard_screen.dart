@@ -1,48 +1,439 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:turova/features/auth/controllers/auth_provider.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Supabase client'a erişim
-    final supabase = ref.watch(supabaseProvider);
+    // Ekran genişliğini alıp ona göre grid yapılarını ayarlayacağız
+    final size = MediaQuery.of(context).size;
+    final isDesktop = size.width > 1024;
+    final isTablet = size.width > 600 && size.width <= 1024;
+    
+    int kpiCrossAxisCount = isDesktop ? 4 : (isTablet ? 2 : 1);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Turova Ana Panel', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        actions: [
-          // ÇIKIŞ YAP BUTONU
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Çıkış Yap',
-            onPressed: () async {
-              await supabase.auth.signOut();
-              // Çıkış yapınca GoRouter bizi otomatik olarak Login'e atacak!
-            },
-          ),
-        ],
-      ),
-      body: const Center(
+      // Arka plan ana temadan geliyor
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(isDesktop ? 32.0 : 16.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.dashboard_customize, size: 80, color: Colors.blueGrey),
-            SizedBox(height: 24),
-            Text(
-              'Hoş Geldin, Kurucu! 👑',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+            // --- HEADER (BAŞLIK VE FİLTRE) ---
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Genel Bakış', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 4),
+                    const Text('Tekrar hoş geldiniz. İşte işletmenizin anlık durumu.', style: TextStyle(color: Colors.grey, fontSize: 16)),
+                  ],
+                ),
+                if (isDesktop)
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: Colors.grey.shade200),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        _buildFilterButton(context, 'Bu Ay', true),
+                        _buildFilterButton(context, 'Geçen Çeyrek', false),
+                      ],
+                    ),
+                  )
+              ],
             ),
-            SizedBox(height: 16),
-            Text(
-              'Sistemin altyapısı tıkır tıkır çalışıyor.',
-              style: TextStyle(fontSize: 16, color: Colors.grey),
+            const SizedBox(height: 32),
+
+            // --- KPI KARTLARI (4'LÜ İSTATİSTİK) ---
+            GridView.count(
+              crossAxisCount: kpiCrossAxisCount,
+              crossAxisSpacing: 24,
+              mainAxisSpacing: 24,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              childAspectRatio: isDesktop ? 1.8 : 2.0, // Kartların yükseklik oranı
+              children: [
+                _buildKpiCard(context, 'Toplam Gelir', '\$124,500', '+12.5%', Icons.account_balance_wallet, Colors.teal, true),
+                _buildKpiCard(context, 'Net Kâr', '\$42,800', '+8.2%', Icons.show_chart, Colors.blueGrey, true),
+                _buildKpiCard(context, 'Aktif Turlar', '34', '0%', Icons.tour, Colors.orange, false),
+                _buildKpiCard(context, 'Toplam Müşteri', '1,204', '+24%', Icons.groups, Theme.of(context).colorScheme.primary, true),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // --- BENTO GRID (GRAFİKLER VE AKTİVİTELER) ---
+            if (isDesktop)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(flex: 2, child: _buildMainChartCard(context)),
+                  const SizedBox(width: 24),
+                  Expanded(
+                    flex: 1,
+                    child: Column(
+                      children: [
+                        _buildOccupancyCard(context),
+                        const SizedBox(height: 24),
+                        _buildActivityFeed(context),
+                      ],
+                    ),
+                  ),
+                ],
+              )
+            else
+              Column(
+                children: [
+                  _buildMainChartCard(context),
+                  const SizedBox(height: 24),
+                  _buildOccupancyCard(context),
+                  const SizedBox(height: 24),
+                  _buildActivityFeed(context),
+                ],
+              ),
+            const SizedBox(height: 32),
+
+            // --- YAKLAŞAN TURLAR LİSTESİ ---
+            _buildUpcomingTours(context, isDesktop),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // --- WIDGET YARDIMCILARI ---
+
+  Widget _buildFilterButton(BuildContext context, String text, bool isActive) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      decoration: BoxDecoration(
+        color: isActive ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3) : Colors.transparent,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: isActive ? Theme.of(context).colorScheme.primary : Colors.grey.shade700,
+          fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+          fontSize: 14,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildKpiCard(BuildContext context, String title, String value, String percentage, IconData icon, Color color, bool isUp) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                  child: Icon(icon, color: color, size: 28),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isUp ? Colors.green.shade50 : Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(isUp ? Icons.trending_up : Icons.drag_handle, color: isUp ? Colors.green : Colors.grey, size: 16),
+                      const SizedBox(width: 4),
+                      Text(percentage, style: TextStyle(color: isUp ? Colors.green : Colors.grey, fontWeight: FontWeight.bold, fontSize: 12)),
+                    ],
+                  ),
+                )
+              ],
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(color: Colors.grey, fontSize: 14)),
+                const SizedBox(height: 4),
+                Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              ],
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildMainChartCard(BuildContext context) {
+    return Card(
+      child: Container(
+        height: 400,
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Gelir & Gider Analizi', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Icon(Icons.more_vert, color: Colors.grey),
+              ],
+            ),
+            const Divider(height: 32),
+            Expanded(
+              child: Center(
+                // Burada ileride fl_chart kütüphanesi ile gerçek grafik çizeceğiz
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.bar_chart, size: 64, color: Colors.grey.shade300),
+                    const SizedBox(height: 16),
+                    Text('Grafik verileri yükleniyor...', style: TextStyle(color: Colors.grey.shade500)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOccupancyCard(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Doluluk Oranı', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Icon(Icons.info_outline, color: Colors.grey, size: 20),
+              ],
+            ),
+            const Divider(height: 32),
+            SizedBox(
+              height: 160,
+              width: 160,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  CircularProgressIndicator(
+                    value: 0.82,
+                    strokeWidth: 12,
+                    backgroundColor: Colors.grey.shade200,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('82%', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+                      Text('Dolu Kapasite', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    ],
+                  )
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildLegend(Theme.of(context).colorScheme.primary, 'Dolu'),
+                const SizedBox(width: 16),
+                _buildLegend(Colors.grey.shade300, 'Boş'),
+              ],
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLegend(Color color, String label) {
+    return Row(
+      children: [
+        Container(width: 12, height: 12, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        const SizedBox(width: 8),
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+      ],
+    );
+  }
+
+  Widget _buildActivityFeed(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Son Aktiviteler', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Text('Tümü', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            const Divider(height: 32),
+            _buildActivityItem(Icons.check_circle, Colors.green, 'Sarah J.', 'Kapadokya Turu için 2 bilet aldı', '10 dk önce'),
+            const SizedBox(height: 16),
+            _buildActivityItem(Icons.schedule, Colors.orange, 'Ödeme Bekleniyor', 'Ege Turu (#4029) rezervasyonu', '1 saat önce'),
+            const SizedBox(height: 16),
+            _buildActivityItem(Icons.update, Colors.blue, 'Sistem Güncellemesi', 'Turova v2.4.1 sürümüne güncellendi', '3 saat önce'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActivityItem(IconData icon, Color color, String title, String desc, String time) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+          child: Icon(icon, color: color, size: 16),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              RichText(
+                text: TextSpan(
+                  style: const TextStyle(color: Colors.black87, fontSize: 13),
+                  children: [
+                    TextSpan(text: '$title ', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    TextSpan(text: desc),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(time, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUpcomingTours(BuildContext context, bool isDesktop) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Yaklaşan Turlar', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Row(
+                  children: [
+                    IconButton(onPressed: () {}, icon: const Icon(Icons.chevron_left)),
+                    IconButton(onPressed: () {}, icon: const Icon(Icons.chevron_right)),
+                  ],
+                )
+              ],
+            ),
+            const Divider(height: 32),
+            // Yatay Liste veya Grid
+            SizedBox(
+              height: 120, // Turların listelenme yüksekliği
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  _buildTourItem(
+                    context,
+                    'Kapadokya Gündoğumu',
+                    '12-14 Ekim',
+                    24, 30,
+                    'https://images.unsplash.com/photo-1643196924535-64bc9a502f6f?q=80&w=600&auto=format&fit=crop',
+                  ),
+                  _buildTourItem(
+                    context,
+                    'Ege Mavi Tur',
+                    '18-25 Ekim',
+                    12, 15,
+                    'https://www.keyftur.com/uploads/0000/8/2024/06/18/buyuk-ege-turu-14.jpg',
+                  ),
+                  _buildTourItem(
+                    context,
+                    'İsviçre Alpleri',
+                    '02-08 Kasım',
+                    40, 40,
+                    'https://images.unsplash.com/photo-1531366936310-6cb1c42248ce?q=80&w=600&auto=format&fit=crop',
+                  ),
+                ],
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTourItem(BuildContext context, String title, String dates, int current, int total, String imgUrl) {
+    double progress = current / total;
+    return Container(
+      width: 300,
+      margin: const EdgeInsets.only(right: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(imgUrl, width: 80, height: 80, fit: BoxFit.cover),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14), maxLines: 1, overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(Icons.calendar_today, size: 12, color: Colors.grey),
+                    const SizedBox(width: 4),
+                    Text(dates, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Kapasite', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                    Text('$current/$total', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                LinearProgressIndicator(
+                  value: progress,
+                  backgroundColor: Colors.grey.shade200,
+                  color: progress == 1.0 ? Colors.green : Theme.of(context).colorScheme.primary,
+                  borderRadius: BorderRadius.circular(4),
+                )
+              ],
+            ),
+          )
+        ],
       ),
     );
   }
