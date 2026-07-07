@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../controllers/customers_provider.dart';
+import 'package:go_router/go_router.dart';
 
 class CustomersScreen extends ConsumerStatefulWidget {
   const CustomersScreen({super.key});
@@ -10,7 +11,6 @@ class CustomersScreen extends ConsumerStatefulWidget {
 }
 
 class _CustomersScreenState extends ConsumerState<CustomersScreen> {
-  
   // --- MÜŞTERİ EKLEME DİYALOĞU (Yenilenmiş Modern Tasarım) ---
   void _showAddCustomerDialog() {
     final nameController = TextEditingController();
@@ -25,30 +25,44 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
         builder: (context, setState) => AlertDialog(
           backgroundColor: Colors.white,
           surfaceTintColor: Colors.transparent,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Yeni Müşteri Kartı', style: TextStyle(fontWeight: FontWeight.bold)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text(
+            'Yeni Müşteri Kartı',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Ad Soyad', prefixIcon: Icon(Icons.person_outline)),
+                  decoration: const InputDecoration(
+                    labelText: 'Ad Soyad',
+                    prefixIcon: Icon(Icons.person_outline),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: phoneController,
-                  decoration: const InputDecoration(labelText: 'Telefon', prefixIcon: Icon(Icons.phone_outlined)),
+                  decoration: const InputDecoration(
+                    labelText: 'Telefon',
+                    prefixIcon: Icon(Icons.phone_outlined),
+                  ),
                   keyboardType: TextInputType.phone,
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: emailController,
-                  decoration: const InputDecoration(labelText: 'E-Posta (Opsiyonel)', prefixIcon: Icon(Icons.mail_outline)),
+                  decoration: const InputDecoration(
+                    labelText: 'E-Posta (Opsiyonel)',
+                    prefixIcon: Icon(Icons.mail_outline),
+                  ),
                   keyboardType: TextInputType.emailAddress,
                 ),
                 const SizedBox(height: 24),
-                
+
                 // KVKK İzinleri Bölümü
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -60,20 +74,35 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Pazarlama & İletişim İzinleri (KVKK)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
+                      const Text(
+                        'Pazarlama & İletişim İzinleri (KVKK)',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
                       const SizedBox(height: 8),
                       CheckboxListTile(
-                        title: const Text('SMS gönderilebilir', style: TextStyle(fontSize: 14)),
+                        title: const Text(
+                          'SMS gönderilebilir',
+                          style: TextStyle(fontSize: 14),
+                        ),
                         value: smsAllowed,
-                        onChanged: (val) => setState(() => smsAllowed = val ?? false),
+                        onChanged: (val) =>
+                            setState(() => smsAllowed = val ?? false),
                         controlAffinity: ListTileControlAffinity.leading,
                         contentPadding: EdgeInsets.zero,
                         visualDensity: VisualDensity.compact,
                       ),
                       CheckboxListTile(
-                        title: const Text('E-Posta gönderilebilir', style: TextStyle(fontSize: 14)),
+                        title: const Text(
+                          'E-Posta gönderilebilir',
+                          style: TextStyle(fontSize: 14),
+                        ),
                         value: emailAllowed,
-                        onChanged: (val) => setState(() => emailAllowed = val ?? false),
+                        onChanged: (val) =>
+                            setState(() => emailAllowed = val ?? false),
                         controlAffinity: ListTileControlAffinity.leading,
                         contentPadding: EdgeInsets.zero,
                         visualDensity: VisualDensity.compact,
@@ -85,21 +114,29 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('İptal', style: TextStyle(color: Colors.grey))),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('İptal', style: TextStyle(color: Colors.grey)),
+            ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.primary,
                 foregroundColor: Colors.white,
               ),
               onPressed: () async {
-                if (nameController.text.isNotEmpty && phoneController.text.isNotEmpty) {
-                  await ref.read(customersActionProvider).addCustomer(
-                    fullName: nameController.text.trim(),
-                    phone: phoneController.text.trim(),
-                    email: emailController.text.trim().isEmpty ? null : emailController.text.trim(),
-                    isSmsAllowed: smsAllowed,
-                    isEmailAllowed: emailAllowed,
-                  );
+                if (nameController.text.isNotEmpty &&
+                    phoneController.text.isNotEmpty) {
+                  await ref
+                      .read(customersActionProvider)
+                      .addCustomer(
+                        fullName: nameController.text.trim(),
+                        phone: phoneController.text.trim(),
+                        email: emailController.text.trim().isEmpty
+                            ? null
+                            : emailController.text.trim(),
+                        isSmsAllowed: smsAllowed,
+                        isEmailAllowed: emailAllowed,
+                      );
                   if (context.mounted) Navigator.pop(context);
                 }
               },
@@ -115,11 +152,13 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
   Widget build(BuildContext context) {
     final customersAsync = ref.watch(customersProvider);
     final size = MediaQuery.of(context).size;
-    
+
     // Responsive Grid Ayarı
     int crossAxisCount = 1;
-    if (size.width > 1200) crossAxisCount = 3;
-    else if (size.width > 800) crossAxisCount = 2;
+    if (size.width > 1200) {
+      crossAxisCount = 3;
+    } else if (size.width > 800)
+      crossAxisCount = 2;
 
     return Scaffold(
       body: customersAsync.when(
@@ -140,7 +179,14 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Müşteri Veritabanı (CRM)', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, letterSpacing: -1)),
+                          Text(
+                            'Müşteri Veritabanı (CRM)',
+                            style: Theme.of(context).textTheme.headlineMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: -1,
+                                ),
+                          ),
                           const SizedBox(height: 8),
                           const Text(
                             'Yolcularınızı yönetin, geçmişlerini görüntüleyin ve iletişim izinlerini takip edin.',
@@ -190,7 +236,12 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                 if (customers.isEmpty)
                   const Padding(
                     padding: EdgeInsets.only(top: 64.0),
-                    child: Center(child: Text('Sistemde henüz müşteri kaydı bulunmuyor.', style: TextStyle(fontSize: 16, color: Colors.grey))),
+                    child: Center(
+                      child: Text(
+                        'Sistemde henüz müşteri kaydı bulunmuyor.',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    ),
                   )
                 else
                   GridView.builder(
@@ -217,7 +268,10 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
   }
 
   // --- MÜŞTERİ KARTI WIDGET'I ---
-  Widget _buildCustomerCard(BuildContext context, Map<String, dynamic> customer) {
+  Widget _buildCustomerCard(
+    BuildContext context,
+    Map<String, dynamic> customer,
+  ) {
     // İsimden baş harfleri alma
     String getInitials(String name) {
       List<String> names = name.split(" ");
@@ -252,7 +306,9 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                     children: [
                       CircleAvatar(
                         radius: 24,
-                        backgroundColor: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                        backgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.primaryContainer.withValues(alpha: 0.3),
                         child: Text(
                           getInitials(customer['full_name']),
                           style: TextStyle(
@@ -267,12 +323,32 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(customer['full_name'], style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+                            Text(
+                              customer['full_name'],
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                             const SizedBox(height: 4),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(12)),
-                              child: const Text('Standart Yolcu', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade100,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Text(
+                                'Standart Yolcu',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.grey,
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -289,9 +365,9 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
               ],
             ),
           ),
-          
+
           const Divider(height: 1, color: Color(0xFFE5E7EB)),
-          
+
           // ORTA KISIM: İletişim Bilgileri
           Expanded(
             child: Padding(
@@ -302,17 +378,41 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.mail_outline, size: 16, color: Colors.grey),
+                      const Icon(
+                        Icons.mail_outline,
+                        size: 16,
+                        color: Colors.grey,
+                      ),
                       const SizedBox(width: 8),
-                      Expanded(child: Text(email, style: const TextStyle(color: Colors.black87, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                      Expanded(
+                        child: Text(
+                          email,
+                          style: const TextStyle(
+                            color: Colors.black87,
+                            fontSize: 13,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      const Icon(Icons.phone_iphone, size: 16, color: Colors.grey),
+                      const Icon(
+                        Icons.phone_iphone,
+                        size: 16,
+                        color: Colors.grey,
+                      ),
                       const SizedBox(width: 8),
-                      Text(customer['phone'], style: const TextStyle(color: Colors.black87, fontSize: 13)),
+                      Text(
+                        customer['phone'],
+                        style: const TextStyle(
+                          color: Colors.black87,
+                          fontSize: 13,
+                        ),
+                      ),
                     ],
                   ),
                   const Spacer(),
@@ -326,18 +426,31 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Son Katıldığı Tur', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                        const Text(
+                          'Son Katıldığı Tur',
+                          style: TextStyle(fontSize: 11, color: Colors.grey),
+                        ),
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            Icon(Icons.map, size: 14, color: Theme.of(context).colorScheme.primary),
+                            Icon(
+                              Icons.map,
+                              size: 14,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
                             const SizedBox(width: 6),
-                            const Text('Kayıt Bulunamadı', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                            const Text(
+                              'Kayıt Bulunamadı',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                           ],
-                        )
+                        ),
                       ],
                     ),
-                  )
+                  ),
                 ],
               ),
             ),
@@ -359,13 +472,18 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                       width: 32,
                       height: 32,
                       decoration: BoxDecoration(
-                        color: smsAllowed ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3) : Colors.grey.shade200,
+                        color: smsAllowed
+                            ? Theme.of(context).colorScheme.primaryContainer
+                                  .withValues(alpha: 0.3)
+                            : Colors.grey.shade200,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        Icons.sms, 
-                        size: 16, 
-                        color: smsAllowed ? Theme.of(context).colorScheme.primary : Colors.grey,
+                        Icons.sms,
+                        size: 16,
+                        color: smsAllowed
+                            ? Theme.of(context).colorScheme.primary
+                            : Colors.grey,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -374,27 +492,44 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                       width: 32,
                       height: 32,
                       decoration: BoxDecoration(
-                        color: emailAllowed ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3) : Colors.grey.shade200,
+                        color: emailAllowed
+                            ? Theme.of(context).colorScheme.primaryContainer
+                                  .withValues(alpha: 0.3)
+                            : Colors.grey.shade200,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        Icons.alternate_email, 
-                        size: 16, 
-                        color: emailAllowed ? Theme.of(context).colorScheme.primary : Colors.grey,
+                        Icons.alternate_email,
+                        size: 16,
+                        color: emailAllowed
+                            ? Theme.of(context).colorScheme.primary
+                            : Colors.grey,
                       ),
                     ),
                   ],
                 ),
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    context.go('/customers/${customer['id']}');
+                  },
                   child: Row(
                     children: [
-                      Text('Detaylar', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
+                      Text(
+                        'Detaylar',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       const SizedBox(width: 4),
-                      Icon(Icons.arrow_forward, size: 16, color: Theme.of(context).colorScheme.primary),
+                      Icon(
+                        Icons.arrow_forward,
+                        size: 16,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                     ],
                   ),
-                )
+                ),
               ],
             ),
           ),

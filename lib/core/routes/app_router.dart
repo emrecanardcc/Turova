@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import '../../features/tours/screens/tour_detail_screen.dart';
 // İskeletimizi core/widgets altından çekiyoruz
 import '../widgets/main_layout.dart';
+import '../../features/customers/screens/customer_detail_screen.dart';
 
 // Diğer ekranlar
 import '../../features/auth/screens/login_screen.dart';
@@ -12,7 +12,6 @@ import '../../features/tours/screens/tours_screen.dart';
 import '../../features/customers/screens/customers_screen.dart';
 import '../../features/bookings/screens/bookings_screen.dart';
 import '../../features/finance/screens/finance_screen.dart';
-import '../../features/auth/controllers/auth_controller.dart';
 import '../../features/auth/controllers/auth_provider.dart'; // <-- EKSİK OLAN IMPORT BURAYA EKLENDİ
 
 final goRouterProvider = Provider<GoRouter>((ref) {
@@ -29,15 +28,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 
       if (!isLoggedIn && !isLoggingIn) return '/login';
       if (isLoggedIn && isLoggingIn) return '/';
-      
+
       return null; // Her şey yolunda
     },
     routes: [
       // 1. GİRİŞ EKRANI (Menüsüz, tam ekran)
-      GoRoute(
-        path: '/login',
-        builder: (context, state) => const LoginScreen(),
-      ),
+      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
 
       // 2. ANA İSKELET (ShellRoute: Sol menü sabit kalır, içindeki ekranlar değişir)
       ShellRoute(
@@ -47,23 +43,44 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(
             path: '/',
-            pageBuilder: (context, state) => const NoTransitionPage(child: DashboardScreen()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: DashboardScreen()),
           ),
           GoRoute(
             path: '/tours',
-            pageBuilder: (context, state) => const NoTransitionPage(child: ToursScreen()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: ToursScreen()),
+          ),
+          GoRoute(
+            path: '/tours/:id',
+            pageBuilder: (context, state) {
+              final tourId = state.pathParameters['id']!;
+              return NoTransitionPage(child: TourDetailScreen(tourId: tourId));
+            },
           ),
           GoRoute(
             path: '/bookings',
-            pageBuilder: (context, state) => const NoTransitionPage(child: BookingsScreen()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: BookingsScreen()),
           ),
           GoRoute(
             path: '/customers',
-            pageBuilder: (context, state) => const NoTransitionPage(child: CustomersScreen()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: CustomersScreen()),
+          ),
+          GoRoute(
+            path: '/customers/:id',
+            pageBuilder: (context, state) {
+              final customerId = state.pathParameters['id']!;
+              return NoTransitionPage(
+                child: CustomerDetailScreen(customerId: customerId),
+              );
+            },
           ),
           GoRoute(
             path: '/finance',
-            pageBuilder: (context, state) => const NoTransitionPage(child: FinanceScreen()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: FinanceScreen()),
           ),
         ],
       ),

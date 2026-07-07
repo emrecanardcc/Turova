@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import '../controllers/tours_provider.dart';
 
 class ToursScreen extends ConsumerStatefulWidget {
@@ -12,7 +13,12 @@ class ToursScreen extends ConsumerStatefulWidget {
 
 class _ToursScreenState extends ConsumerState<ToursScreen> {
   int _selectedFilterIndex = 0;
-  final List<String> _filters = ['Tüm Turlar', 'Aktif Turlar', 'Tam Dolu', 'Tamamlananlar'];
+  final List<String> _filters = [
+    'Tüm Turlar',
+    'Aktif Turlar',
+    'Tam Dolu',
+    'Tamamlananlar',
+  ];
 
   // Eski ekleme diyaloğumuzu modern tasarıma uyarlıyoruz
   void _showAddTourDialog(BuildContext context) {
@@ -32,8 +38,11 @@ class _ToursScreenState extends ConsumerState<ToursScreen> {
       );
       if (picked != null) {
         setState(() {
-          if (isStart) selectedStartDate = picked;
-          else selectedEndDate = picked;
+          if (isStart) {
+            selectedStartDate = picked;
+          } else {
+            selectedEndDate = picked;
+          }
         });
       }
     }
@@ -46,21 +55,53 @@ class _ToursScreenState extends ConsumerState<ToursScreen> {
             return AlertDialog(
               backgroundColor: Colors.white,
               surfaceTintColor: Colors.transparent,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: const Text('Yeni Tur Oluştur', style: TextStyle(fontWeight: FontWeight.bold)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: const Text(
+                'Yeni Tur Oluştur',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    TextField(controller: titleController, decoration: const InputDecoration(labelText: 'Tur Adı (Örn: Kapadokya)')),
+                    TextField(
+                      controller: titleController,
+                      decoration: const InputDecoration(
+                        labelText: 'Tur Adı (Örn: Kapadokya)',
+                      ),
+                    ),
                     const SizedBox(height: 12),
-                    TextField(controller: descController, decoration: const InputDecoration(labelText: 'Kısa Açıklama'), maxLines: 2),
+                    TextField(
+                      controller: descController,
+                      decoration: const InputDecoration(
+                        labelText: 'Kısa Açıklama',
+                      ),
+                      maxLines: 2,
+                    ),
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        Expanded(child: TextField(controller: capacityController, decoration: const InputDecoration(labelText: 'Kontenjan'), keyboardType: TextInputType.number)),
+                        Expanded(
+                          child: TextField(
+                            controller: capacityController,
+                            decoration: const InputDecoration(
+                              labelText: 'Kontenjan',
+                            ),
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
                         const SizedBox(width: 12),
-                        Expanded(child: TextField(controller: priceController, decoration: const InputDecoration(labelText: 'Fiyat (₺)'), keyboardType: TextInputType.number)),
+                        Expanded(
+                          child: TextField(
+                            controller: priceController,
+                            decoration: const InputDecoration(
+                              labelText: 'Fiyat (₺)',
+                            ),
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -68,40 +109,73 @@ class _ToursScreenState extends ConsumerState<ToursScreen> {
                       children: [
                         Expanded(
                           child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade100, foregroundColor: Colors.black87),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.grey.shade100,
+                              foregroundColor: Colors.black87,
+                            ),
                             onPressed: () => pickDate(true, setState),
                             icon: const Icon(Icons.date_range, size: 18),
-                            label: Text(selectedStartDate != null ? DateFormat('dd/MM/yyyy').format(selectedStartDate!) : 'Başlangıç'),
+                            label: Text(
+                              selectedStartDate != null
+                                  ? DateFormat(
+                                      'dd/MM/yyyy',
+                                    ).format(selectedStartDate!)
+                                  : 'Başlangıç',
+                            ),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade100, foregroundColor: Colors.black87),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.grey.shade100,
+                              foregroundColor: Colors.black87,
+                            ),
                             onPressed: () => pickDate(false, setState),
                             icon: const Icon(Icons.date_range, size: 18),
-                            label: Text(selectedEndDate != null ? DateFormat('dd/MM/yyyy').format(selectedEndDate!) : 'Bitiş'),
+                            label: Text(
+                              selectedEndDate != null
+                                  ? DateFormat(
+                                      'dd/MM/yyyy',
+                                    ).format(selectedEndDate!)
+                                  : 'Bitiş',
+                            ),
                           ),
                         ),
                       ],
-                    )
+                    ),
                   ],
                 ),
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(context), child: const Text('İptal', style: TextStyle(color: Colors.grey))),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    'İptal',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary, foregroundColor: Colors.white),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Colors.white,
+                  ),
                   onPressed: () async {
-                    if (titleController.text.isNotEmpty && selectedStartDate != null && selectedEndDate != null && capacityController.text.isNotEmpty && priceController.text.isNotEmpty) {
-                      await ref.read(toursActionProvider).addTour(
-                        title: titleController.text,
-                        description: descController.text,
-                        startDate: selectedStartDate!,
-                        endDate: selectedEndDate!,
-                        capacity: int.parse(capacityController.text),
-                        price: double.parse(priceController.text),
-                      );
+                    if (titleController.text.isNotEmpty &&
+                        selectedStartDate != null &&
+                        selectedEndDate != null &&
+                        capacityController.text.isNotEmpty &&
+                        priceController.text.isNotEmpty) {
+                      await ref
+                          .read(toursActionProvider)
+                          .addTour(
+                            title: titleController.text,
+                            description: descController.text,
+                            startDate: selectedStartDate!,
+                            endDate: selectedEndDate!,
+                            capacity: int.parse(capacityController.text),
+                            price: double.parse(priceController.text),
+                          );
                       if (context.mounted) Navigator.pop(context);
                     }
                   },
@@ -109,7 +183,7 @@ class _ToursScreenState extends ConsumerState<ToursScreen> {
                 ),
               ],
             );
-          }
+          },
         );
       },
     );
@@ -119,11 +193,13 @@ class _ToursScreenState extends ConsumerState<ToursScreen> {
   Widget build(BuildContext context) {
     final toursAsync = ref.watch(toursProvider);
     final size = MediaQuery.of(context).size;
-    
+
     // Responsive grid ayarlaması
     int crossAxisCount = 1;
-    if (size.width > 1200) crossAxisCount = 3;
-    else if (size.width > 800) crossAxisCount = 2;
+    if (size.width > 1200) {
+      crossAxisCount = 3;
+    } else if (size.width > 800)
+      crossAxisCount = 2;
 
     return Scaffold(
       body: toursAsync.when(
@@ -144,7 +220,14 @@ class _ToursScreenState extends ConsumerState<ToursScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Tur Yönetimi', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, letterSpacing: -1)),
+                          Text(
+                            'Tur Yönetimi',
+                            style: Theme.of(context).textTheme.headlineMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: -1,
+                                ),
+                          ),
                           const SizedBox(height: 8),
                           const Text(
                             'Operasyonel turlarınızı, müsaitlik durumlarını ve yolcu listelerini buradan yönetin.',
@@ -156,15 +239,36 @@ class _ToursScreenState extends ConsumerState<ToursScreen> {
                     const SizedBox(width: 16),
                     Container(
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(colors: [Color(0xFF1CA9C9), Color(0xFF1698B5)], begin: Alignment.topCenter, end: Alignment.bottomCenter),
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF1CA9C9), Color(0xFF1698B5)],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
                         borderRadius: BorderRadius.circular(12),
-                        boxShadow: [BoxShadow(color: const Color(0xFF1CA9C9).withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))],
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(
+                              0xFF1CA9C9,
+                            ).withValues(alpha: 0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
                       child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                        ),
                         onPressed: () => _showAddTourDialog(context),
                         icon: const Icon(Icons.add, color: Colors.white),
-                        label: const Text('Yeni Tur Ekle', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        label: const Text(
+                          'Yeni Tur Ekle',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -186,13 +290,25 @@ class _ToursScreenState extends ConsumerState<ToursScreen> {
                             setState(() => _selectedFilterIndex = index);
                           },
                           backgroundColor: Colors.white,
-                          selectedColor: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                          selectedColor: Theme.of(
+                            context,
+                          ).colorScheme.primaryContainer.withValues(alpha: 0.3),
                           labelStyle: TextStyle(
-                            color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey.shade700,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            color: isSelected
+                                ? Theme.of(context).colorScheme.primary
+                                : Colors.grey.shade700,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
                           ),
-                          side: BorderSide(color: isSelected ? Theme.of(context).colorScheme.primaryContainer : Colors.grey.shade200),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          side: BorderSide(
+                            color: isSelected
+                                ? Theme.of(context).colorScheme.primaryContainer
+                                : Colors.grey.shade200,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
                         ),
                       );
                     }),
@@ -204,7 +320,12 @@ class _ToursScreenState extends ConsumerState<ToursScreen> {
                 if (tours.isEmpty)
                   const Padding(
                     padding: EdgeInsets.only(top: 64.0),
-                    child: Center(child: Text('Henüz planlanmış bir tur yok. Sağ üstten yeni tur ekleyebilirsiniz.', style: TextStyle(fontSize: 16, color: Colors.grey))),
+                    child: Center(
+                      child: Text(
+                        'Henüz planlanmış bir tur yok. Sağ üstten yeni tur ekleyebilirsiniz.',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    ),
                   )
                 else
                   GridView.builder(
@@ -236,11 +357,12 @@ class _ToursScreenState extends ConsumerState<ToursScreen> {
     final int capacity = tour['capacity'];
     final double price = tour['price_per_person'];
     // Şimdilik test için rastgele doluluk oranı veriyoruz. (İleride Bookings tablosundan sayacağız)
-    final int currentBookings = 0; 
+    final int currentBookings = 0;
     final double progress = capacity > 0 ? (currentBookings / capacity) : 0;
-    
+
     // Geçici şık bir görsel (Veritabanında image_url olana kadar)
-    const fallbackImage = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1000&auto=format&fit=crop';
+    const fallbackImage =
+        'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1000&auto=format&fit=crop';
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -258,24 +380,40 @@ class _ToursScreenState extends ConsumerState<ToursScreen> {
                   top: 12,
                   left: 12,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
                       children: [
-                        Container(width: 8, height: 8, decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary, shape: BoxShape.circle)),
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
                         const SizedBox(width: 6),
-                        const Text('Aktif', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                        const Text(
+                          'Aktif',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                )
+                ),
               ],
             ),
           ),
-          
+
           // ALT KISIM: DETAYLAR
           Expanded(
             flex: 4,
@@ -284,14 +422,32 @@ class _ToursScreenState extends ConsumerState<ToursScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(tour['title'], style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text(
+                    tour['title'],
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   const SizedBox(height: 12),
-                  
+
                   Row(
                     children: [
-                      const Icon(Icons.calendar_month, size: 18, color: Colors.grey),
+                      const Icon(
+                        Icons.calendar_month,
+                        size: 18,
+                        color: Colors.grey,
+                      ),
                       const SizedBox(width: 8),
-                      Text(DateFormat('dd MMM yyyy').format(startDate), style: const TextStyle(fontSize: 13, color: Colors.grey)),
+                      Text(
+                        DateFormat('dd MMM yyyy').format(startDate),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -299,18 +455,39 @@ class _ToursScreenState extends ConsumerState<ToursScreen> {
                     children: [
                       const Icon(Icons.sell, size: 18, color: Colors.grey),
                       const SizedBox(width: 8),
-                      Text('₺${price.toStringAsFixed(0)} / Kişi', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                      Text(
+                        '₺${price.toStringAsFixed(0)} / Kişi',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
-                  
+
                   const Spacer(),
-                  
+
                   // KAPASİTE ÇUBUĞU
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('DOLULUK ORANI', style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
-                      Text('$currentBookings/$capacity Dolu', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
+                      const Text(
+                        'DOLULUK ORANI',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.grey,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      Text(
+                        '$currentBookings/$capacity Dolu',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -321,20 +498,27 @@ class _ToursScreenState extends ConsumerState<ToursScreen> {
                     minHeight: 6,
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // BUTONLAR
                   Row(
                     children: [
                       Expanded(
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.5),
-                            foregroundColor: Theme.of(context).colorScheme.onSecondaryContainer,
+                            backgroundColor: Theme.of(context)
+                                .colorScheme
+                                .secondaryContainer
+                                .withValues(alpha: 0.5),
+                            foregroundColor: Theme.of(
+                              context,
+                            ).colorScheme.onSecondaryContainer,
                             elevation: 0,
                           ),
-                          onPressed: () {},
+                          onPressed: () {
+                            context.go('/tours/${tour['id']}');
+                          },
                           child: const Text('Detayları Gör'),
                         ),
                       ),
@@ -346,15 +530,19 @@ class _ToursScreenState extends ConsumerState<ToursScreen> {
                         ),
                         child: IconButton(
                           onPressed: () {},
-                          icon: const Icon(Icons.edit, size: 20, color: Colors.grey),
+                          icon: const Icon(
+                            Icons.edit,
+                            size: 20,
+                            color: Colors.grey,
+                          ),
                         ),
-                      )
+                      ),
                     ],
-                  )
+                  ),
                 ],
               ),
             ),
-          )
+          ),
         ],
       ),
     );

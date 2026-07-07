@@ -32,24 +32,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     return Scaffold(
       // Arka plan rengini temadan (kremsi beyaz) alıyor
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Container(
-            width: 1200, // Maksimum genişlik (Çok büyük ekranlarda yayılmasın diye)
-            height: isDesktop ? 700 : null, // Masaüstünde sabit yükseklik, mobilde içeriğe göre
+            width:
+                1200, // Maksimum genişlik (Çok büyük ekranlarda yayılmasın diye)
+            height: isDesktop
+                ? 700
+                : null, // Masaüstünde sabit yükseklik, mobilde içeriğe göre
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.8), // Cam efekti zemini
+              color: Colors.white.withValues(alpha: 0.8), // Cam efekti zemini
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.05),
                   blurRadius: 30,
                   offset: const Offset(0, 10),
-                )
+                ),
               ],
-              border: Border.all(color: Colors.white, width: 2), // İnce beyaz çerçeve (Glassmorphism)
+              border: Border.all(
+                color: Colors.white,
+                width: 2,
+              ), // İnce beyaz çerçeve (Glassmorphism)
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(22),
@@ -74,8 +82,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 begin: Alignment.bottomCenter,
                                 end: Alignment.topCenter,
                                 colors: [
-                                  const Color(0xFF171C1E).withOpacity(0.9),
-                                  const Color(0xFF171C1E).withOpacity(0.3),
+                                  const Color(
+                                    0xFF171C1E,
+                                  ).withValues(alpha: 0.9),
+                                  const Color(
+                                    0xFF171C1E,
+                                  ).withValues(alpha: 0.3),
                                 ],
                               ),
                             ),
@@ -93,10 +105,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.2),
+                                        color: Colors.white.withValues(
+                                          alpha: 0.2,
+                                        ),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
-                                      child: const Icon(Icons.explore, color: Colors.white, size: 28),
+                                      child: const Icon(
+                                        Icons.explore,
+                                        color: Colors.white,
+                                        size: 28,
+                                      ),
                                     ),
                                     const SizedBox(width: 12),
                                     const Text(
@@ -164,16 +182,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
-                                        color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.2),
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primaryContainer
+                                            .withValues(alpha: 0.2),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
-                                      child: Icon(Icons.explore, color: Theme.of(context).colorScheme.primary, size: 28),
+                                      child: Icon(
+                                        Icons.explore,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.primary,
+                                        size: 28,
+                                      ),
                                     ),
                                     const SizedBox(width: 12),
                                     Text(
                                       'Turova',
                                       style: TextStyle(
-                                        color: Theme.of(context).colorScheme.primary,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.primary,
                                         fontSize: 28,
                                         fontWeight: FontWeight.w900,
                                         letterSpacing: -1,
@@ -186,19 +215,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                               const Text(
                                 'Tekrar Hoş Geldiniz',
-                                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: -1),
+                                style: TextStyle(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: -1,
+                                ),
                                 textAlign: TextAlign.center,
                               ),
                               const SizedBox(height: 8),
                               const Text(
                                 'Turlarınızı yönetmek için panelinize giriş yapın.',
-                                style: TextStyle(fontSize: 14, color: Colors.grey),
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                ),
                                 textAlign: TextAlign.center,
                               ),
                               const SizedBox(height: 40),
 
                               // E-Posta
-                              const Text('E-Posta Adresi', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey)),
+                              const Text(
+                                'E-Posta Adresi',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey,
+                                ),
+                              ),
                               const SizedBox(height: 8),
                               TextField(
                                 controller: _emailController,
@@ -211,13 +254,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                               // Şifre
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  const Text('Şifre', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey)),
+                                  const Text(
+                                    'Şifre',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
                                   TextButton(
                                     onPressed: () {},
-                                    style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero),
-                                    child: const Text('Şifremi unuttum?', style: TextStyle(fontSize: 12)),
+                                    style: TextButton.styleFrom(
+                                      padding: EdgeInsets.zero,
+                                      minimumSize: Size.zero,
+                                    ),
+                                    child: const Text(
+                                      'Şifremi unuttum?',
+                                      style: TextStyle(fontSize: 12),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -240,12 +297,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     width: 24,
                                     child: Checkbox(
                                       value: _rememberMe,
-                                      onChanged: (val) => setState(() => _rememberMe = val!),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                                      onChanged: (val) =>
+                                          setState(() => _rememberMe = val!),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(width: 8),
-                                  const Text('30 gün boyunca beni hatırla', style: TextStyle(fontSize: 14, color: Colors.grey)),
+                                  const Text(
+                                    '30 gün boyunca beni hatırla',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
                                 ],
                               ),
                               const SizedBox(height: 32),
@@ -258,11 +324,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   gradient: const LinearGradient(
                                     begin: Alignment.topCenter,
                                     end: Alignment.bottomCenter,
-                                    colors: [Color(0xFF1CA9C9), Color(0xFF1698B5)], // Senin attığın tasarım renkleri
+                                    colors: [
+                                      Color(0xFF1CA9C9),
+                                      Color(0xFF1698B5),
+                                    ], // Senin attığın tasarım renkleri
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(0xFF1CA9C9).withOpacity(0.3),
+                                      color: const Color(
+                                        0xFF1CA9C9,
+                                      ).withValues(alpha: 0.3),
                                       blurRadius: 12,
                                       offset: const Offset(0, 4),
                                     ),
@@ -272,20 +343,49 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.transparent,
                                     shadowColor: Colors.transparent,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
                                   ),
                                   onPressed: isLoading
                                       ? null
                                       : () {
-                                          final email = _emailController.text.trim();
-                                          final password = _passwordController.text.trim();
-                                          if (email.isNotEmpty && password.isNotEmpty) {
-                                            ref.read(authControllerProvider.notifier).login(email, password, context);
+                                          final email = _emailController.text
+                                              .trim();
+                                          final password = _passwordController
+                                              .text
+                                              .trim();
+                                          if (email.isNotEmpty &&
+                                              password.isNotEmpty) {
+                                            ref
+                                                .read(
+                                                  authControllerProvider
+                                                      .notifier,
+                                                )
+                                                .login(
+                                                  email,
+                                                  password,
+                                                  context,
+                                                );
                                           }
                                         },
                                   child: isLoading
-                                      ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                      : const Text('Giriş Yap', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
+                                      ? const SizedBox(
+                                          height: 24,
+                                          width: 24,
+                                          child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : const Text(
+                                          'Giriş Yap',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.white,
+                                          ),
+                                        ),
                                 ),
                               ),
                             ],
